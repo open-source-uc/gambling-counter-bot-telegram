@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "dev": "wrangler dev src/index.ts",
-    "deploy": "wrangler deploy --minify src/index.ts"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify"
   },
   "dependencies": {
     "@octokit/webhooks": "^12.0.11",
@@ -12,7 +12,7 @@
     "jose": "^5.2.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240129.0",
+    "@cloudflare/workers-types": "^4.20250303.0",
     "@total-typescript/ts-reset": "^0.5.1",
     "wrangler": "^3.25.0"
   }

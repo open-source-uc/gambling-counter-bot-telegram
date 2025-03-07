@@ -26,13 +26,13 @@ telegramApp.use("*", async (c, next) => {
   await next();
 });
 
-// telegramApp.get("telegram/webhook", async (c) => {
-//   await c.var.bot.api.setWebhook(`${c.env.BASE_URL}/telegram/webhook`, {
-//     secret_token: c.env.TELEGRAM_BOT_SECRET,
-//   });
+telegramApp.get("telegram/webhook", async (c) => {
+  await c.var.bot.api.setWebhook(`${c.env.BASE_URL}/telegram/webhook`, {
+    secret_token: c.env.TELEGRAM_BOT_SECRET,
+  });
 
-//   return c.text("OK", 200);
-// });
+  return c.text("OK", 200);
+});
 
 // telegramApp.post("telegram/webhook", async (c) => {
 //   const providedSecret = c.req.header("X-Telegram-Bot-Api-Secret-Token");

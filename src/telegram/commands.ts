@@ -18,15 +18,15 @@ function getTargetChatType(msg: Message): ChatInfo {
   return { chatId: msg.chat.id };
 }
 
-commandComposer.command("status", async (ctx) => {
+
+commandComposer.command("stop_cristobal", async (ctx) => {
   if (!ctx.message) return;
 
   const chatInfo = getTargetChatType(ctx.message);
 
   const msg = new MessageBuilder()
-    .add("🤖 <b>Bot Status</b>")
+    .add("Cristóbal ha sido desactivado. Hola")
     .newLine(2)
-    .add("🟢 <b>Online</b>")
     .build();
 
   await ctx.api.sendMessage(chatInfo.chatId, msg, {

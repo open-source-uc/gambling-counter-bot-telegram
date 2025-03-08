@@ -63,12 +63,12 @@ telegramApp.post(
     const { title, content, contact } = c.req.valid("json");
 
     const msg = new MessageBuilder()
-      .add(`${title}`)
+      .add(`[${title}]`)
       .newLine(1)
       .add(`Contacto: ${contact}`)
-      .newLine(1)
+      .newLine(2)
       .add(`${content}`)
-      .newLine(1)
+      .newLine(2)
       .build();
 
     await c.var.bot.api.sendMessage(c.env.TELEGRAM_CHAT_ID, msg, {

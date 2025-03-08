@@ -18,34 +18,15 @@ function getTargetChatType(msg: Message): ChatInfo {
   return { chatId: msg.chat.id };
 }
 
-commandComposer.command("start", async (ctx) => {
-  if (!ctx.message) return;
-
-  const chatInfo = getTargetChatType(ctx.message);
-  const token = await encodeChatInfo(ctx.env.jwtSecret, chatInfo);
-
-  const msg = new MessageBuilder()
-    .add("Añade el siguiente webhook a tu repositorio u organización")
-    .add("y los eventos issues, discussion, o/y PRs habilitados")
-    .add(`(<a href="https://docs.github.com/es/webhooks/using-webhooks/creating-webhooks">docs</a>).`)
-    .newLine(2)
-    .build();
-
-  await ctx.api.sendMessage(chatInfo.chatId, msg, {
-    message_thread_id: chatInfo.topicId,
-    parse_mode: "HTML",
-    link_preview_options: { is_disabled: true },
-  });
-});
-
-commandComposer.command("stop_cristobal", async (ctx) => {
+commandComposer.command("status", async (ctx) => {
   if (!ctx.message) return;
 
   const chatInfo = getTargetChatType(ctx.message);
 
   const msg = new MessageBuilder()
-    .add("Cristóbal ha sido desactivado.")
+    .add("🤖 <b>Bot Status</b>")
     .newLine(2)
+    .add("🟢 <b>Online</b>")
     .build();
 
   await ctx.api.sendMessage(chatInfo.chatId, msg, {

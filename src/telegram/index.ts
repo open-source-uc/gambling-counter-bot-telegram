@@ -31,17 +31,17 @@ telegramApp.get("telegram/webhook", async (c) => {
     secret_token: c.env.TELEGRAM_BOT_SECRET,
   });
 
-  return c.text("OK", 200);
+  return c.text(`${c.env.BASE_URL}/telegram/webhook`, 200);
 });
 
-// telegramApp.post("telegram/webhook", async (c) => {
-//   const providedSecret = c.req.header("X-Telegram-Bot-Api-Secret-Token");
+telegramApp.post("telegram/webhook", async (c) => {
+  const secretToken = c.req.header("X-Telegram-Bot-Api-Secret-Token");
+  if (secretToken !== c.env.TELEGRAM_BOT_SECRET) {
+    return c.text("Unauthorized", 401);
+  }
 
-//   if (providedSecret !== c.env.TELEGRAM_BOT_SECRET) {
-//     c.status(401);
-//     return c.text("Unauthorized");
-//   }
+  const update = await c.req.json();
+  await c.var.bot.handleUpdate(update);
 
-//   await c.var.bot.handleUpdate(await c.req.json<any>());
-//   return c.text("OK", 200);
-// });
+  return c.text("OK", 200);
+});

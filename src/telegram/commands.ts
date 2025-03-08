@@ -19,13 +19,14 @@ function getTargetChatType(msg: Message): ChatInfo {
 }
 
 
-commandComposer.command("stop_cristobal", async (ctx) => {
+commandComposer.command("status", async (ctx) => {
   if (!ctx.message) return;
 
   const chatInfo = getTargetChatType(ctx.message);
 
   const msg = new MessageBuilder()
-    .add("Cristóbal ha sido desactivado. Hola")
+    .add("El bot está funcionando. :D")
+    .add(`La ID de esta chat es: ${chatInfo.chatId}`)
     .newLine(2)
     .build();
 

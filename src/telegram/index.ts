@@ -5,6 +5,9 @@ import { commandComposer } from "./commands";
 import { BotContext } from "./context";
 
 import { Env } from "../env";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
+import { MessageBuilder } from "../utils/msgBuilder";
 
 export const telegramApp = new Hono<Env>();
 
@@ -45,3 +48,36 @@ telegramApp.post("telegram/webhook", async (c) => {
 
   return c.text("OK", 200);
 });
+
+const schema = z.object({
+  title: z.string(),
+  content: z.string(),
+  contact: z.string()
+})
+
+
+telegramApp.post(
+  '/telegram/webhook/osuc',
+  zValidator('json', schema),
+  async (c) => {
+    const { title, content, contact } = c.req.valid("json");
+
+    const msg = new MessageBuilder()
+      .add(`${title}`)
+      .newLine(1)
+      .add(`Contacto: ${contact}`)
+      .newLine(1)
+      .add(`${content}`)
+      .newLine(1)
+      .build();
+
+    await c.var.bot.api.sendMessage(c.env.TELEGRAM_CHAT_ID, msg, {
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+    });
+
+    return c.json({
+      message: "Re facherito!"
+    }, 200)
+  }
+)

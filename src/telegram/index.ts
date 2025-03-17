@@ -53,7 +53,7 @@ telegramApp.post("telegram/webhook", async (c) => {
 
 telegramApp.post(
   '/hook/osuc',
-  zValidator("form", z.object({
+  zValidator("json", z.object({
     title: z.string(),
     tags: z.array(z.string()),
     content: z.string(),
@@ -68,7 +68,7 @@ telegramApp.post(
       return c.text("Unauthorized", 401);
     }
 
-    const { title, tags, content } = c.req.valid("form")
+    const { title, tags, content } = c.req.valid("json")
 
     const msg = new MessageBuilder()
       .add(`# ${title}`)

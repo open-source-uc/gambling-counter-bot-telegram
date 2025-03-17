@@ -49,30 +49,37 @@ telegramApp.post("telegram/webhook", async (c) => {
   return c.text("OK", 200);
 });
 
-const schema = z.object({
-  title: z.string(),
-  content: z.string(),
-  contact: z.string()
-})
 
 
 telegramApp.post(
-  '/telegram/webhook/osuc',
-  zValidator('json', schema),
+  '/hook/osuc',
+  zValidator("form", z.object({
+    title: z.string(),
+    tags: z.array(z.string()),
+    content: z.string(),
+  })),
+  zValidator('header', z.object({
+    TELEGRAM_BOT_SECRET: z.string()
+  })),
   async (c) => {
-    const { title, content, contact } = c.req.valid("json");
+    const { TELEGRAM_BOT_SECRET } = c.req.valid("header")
+
+    if (TELEGRAM_BOT_SECRET !== c.env.TELEGRAM_BOT_SECRET) {
+      return c.text("Unauthorized", 401);
+    }
+
+    const { title, tags, content } = c.req.valid("form")
 
     const msg = new MessageBuilder()
-      .add(`[${title}]`)
+      .add(`# ${title}`)
       .newLine(1)
-      .add(`Contacto: ${contact}`)
+      .add(`Tags: ${tags.join(", ")}`)
       .newLine(2)
       .add(`${content}`)
-      .newLine(2)
       .build();
 
     await c.var.bot.api.sendMessage(c.env.TELEGRAM_CHAT_ID, msg, {
-      parse_mode: "HTML",
+      parse_mode: "MarkdownV2",
       link_preview_options: { is_disabled: true },
     });
 

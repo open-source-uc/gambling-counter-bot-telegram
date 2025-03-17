@@ -6,7 +6,6 @@ export type Bindings = {
   JWT_SECRET: string;
   TELEGRAM_BOT_SECRET: string;
   TELEGRAM_BOT_TOKEN: string;
-  TELEGRAM_BOT_WEBHOOK_URL: string;
   TELEGRAM_CHAT_ID: string;
 };
 

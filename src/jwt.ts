@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 export type ChatInfo = {
   chatId: number;
   topicId?: number;
-  isSimpleGroup?: true;
+  isSimpleGroup?: boolean;
 };
 
 export async function encodeChatInfo(secret: string, chatInfo: ChatInfo) {

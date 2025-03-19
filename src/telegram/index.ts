@@ -55,7 +55,7 @@ telegramApp.post(
   '/hook/osuc',
   zValidator("json", z.object({
     title: z.string(),
-    tags: z.array(z.string()),
+    tags: z.string(),
     content: z.string(),
   })),
   zValidator('header', z.object({
@@ -68,12 +68,16 @@ telegramApp.post(
       return c.text("Unauthorized", 401);
     }
 
-    const { title, tags, content } = c.req.valid("json")
+    let { title, tags, content } = c.req.valid("json")
+
+    title.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+    tags.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+    content.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
 
     const msg = new MessageBuilder()
-      .add(`# ${title}`)
+      .add(`${title}`)
       .newLine(1)
-      .add(`Tags: ${tags.join(", ")}`)
+      .add(`Tags: ${tags}`)
       .newLine(2)
       .add(`${content}`)
       .build();

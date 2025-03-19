@@ -8,7 +8,7 @@ export const commandComposer = new Composer<BotContext>();
 
 function getTargetChatType(msg: Message): ChatInfo {
   if (msg.chat.type === "supergroup" && msg.is_topic_message) {
-    return { chatId: msg.chat.id, topicId: msg.message_thread_id };
+    return { chatId: msg.chat.id, topicId: msg.message_thread_id, isSimpleGroup: false };
   }
 
   if (msg.chat.type === "group") {
@@ -25,8 +25,11 @@ commandComposer.command("status", async (ctx) => {
   const chatInfo = getTargetChatType(ctx.message);
 
   const msg = new MessageBuilder()
-    .add("El bot está funcionando. :D")
-    .add(`La ID de esta chat es: ${chatInfo.chatId}`)
+    .add("El bot está funcionando :D")
+    .newLine(2)
+    .add(`La ID de este chat es: ${chatInfo.chatId}`)
+    .newLine(1)
+    .add(`La ID del tema es: ${ctx.message.message_thread_id}`)
     .newLine(2)
     .build();
 

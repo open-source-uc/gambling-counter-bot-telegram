@@ -90,6 +90,20 @@ commandComposer.on("message", async (ctx) => {
   if (!user_id) return;
   if (ctx.message.dice?.emoji !== "🎰") return;
 
+  if (ctx.message.chat.type === "private") {
+    const msg = new MessageBuilder()
+      .add(`Tú, @${ctx.message.from.username}, eres hermoso, pero no puedes jugar aquí.`)
+      .build();
+
+    await ctx.api.sendMessage(chatInfo.chatId, msg, {
+      message_thread_id: chatInfo.topicId,
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+    });
+
+    return;
+  };
+
   const data = await ctx.env.gambling.get<{ gambling_count?: number; last_gamble_date?: string }>(user_id, "json");
 
   const current_gambling_count = data?.gambling_count ?? 0;

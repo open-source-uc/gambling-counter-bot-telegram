@@ -6,10 +6,11 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "kv_namespaces": [
+  "d1_databases": [
     {
-      "binding": "gambling",
-      "id": "b6810de7cbd84b46ab2c1fe69b797b88"
+      "binding": "DB",
+      "database_id": "030557b5-2bc5-4e41-88a2-5d267a7cbaf6",
+      "database_name": "gambling-counter"
     }
   ]
 }

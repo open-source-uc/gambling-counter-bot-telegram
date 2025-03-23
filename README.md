@@ -1,52 +1,35 @@
 # Telegram Bot
 
-Este es un bot de Telegram que, al recibir un `FormData` en la ruta `/hook/osuc` mediante una petición `POST`, envía un mensaje personalizado al canal en el que se encuentre el bot y que tenga el mismo ID que la variable de entorno `TELEGRAM_CHAT_ID`, definida en el archivo `.dev.vars`.
+Este es un bot de Telegram diseñado para contar la cantidad de veces que aparece el emoji de gambling. También cuenta con un sticker que indica si ganaste.
 
-## Variables de entorno
+Este bot se ejecuta en Cloudflare mediante un Worker y utiliza una base de datos SQLite en D1.
 
-> **IMPORTANTE**
-> El archivo debe llamarse **`.dev.vars`**.
+## Variables de entorno (.dev.vars)
 
-```bash
-BASE_URL=
-JWT_SECRET=
-TELEGRAM_BOT_SECRET=
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
+Para desarrollar este proyecto, necesitas definir las siguientes variables de entorno en un archivo `.dev.vars`:
+
+```
+BASE_URL= // URL del webhook, solo la base
+JWT_SECRET= // Un valor aleatorio (el código fue tomado de Benja Vicente y funciona, así que no se modificó)
+TELEGRAM_BOT_SECRET= // Palabra secreta para evitar abusos en la API
+TELEGRAM_BOT_TOKEN= // Token de Telegram
 ```
 
-## Comandos
+## Configuración
 
-- **Desarrollo:**
-  ```bash
-    node --run dev
-  ```
-  Inicia el entorno de desarrollo.
+En la carpeta `setup`, ejecuta `setup.sh` para crear las tablas e índices necesarios para obtener el podio.
 
-- **Deploy:**
-  ```bash
-  node --run deploy
-  ```
-  Despliega el bot en Cloudflare Workers.
+## Reporte Técnico
 
-## Reporte técnico
+Este bot fue creado utilizando `grammy.js` para interactuar con la API de Telegram, además de `Hono.js` para garantizar compatibilidad con Cloudflare Workers.
 
 ### Estructura del código
+- Las rutas están definidas en `src/index.ts`:
+  - `GET /`: Endpoint de prueba para verificar que la API está funcionando.
+  - `GET /telegram/webhook`: Permite configurar el webhook que utilizará el bot.
+  - `POST /telegram/webhook`: Recibe los datos enviados por Telegram cuando el bot detecta un mensaje.
 
-#### `src/index.ts`
-Aquí se encuentran las rutas de la API implementada con HonoJS para manejar el bot. Contiene:
-
-- Una ruta que devuelve un "hi" para verificar fácilmente si está desplegado.
-- La ruta `/hook/osuc`, que recibe un `FormData` y envía un mensaje al canal configurado en las variables de entorno.
-
-#### `telegram/index.ts`
-
-- **Ruta GET**: 
-  - Configura el webhook del bot con `c.var.bot.api.setWebhook(\`\${c.env.BASE_URL}/telegram/webhook\`)`, lo que permite a Telegram enviar las solicitudes `POST` al bot.
-
-- **Ruta POST**:
-  - Telegram envía aquí los comandos del bot para ser procesados.
-  - Se utiliza `TELEGRAM_BOT_SECRET` para validar que las solicitudes provienen exclusivamente de Telegram y evitar accesos no autorizados.
-
-### Webhook y envío de mensajes
-El webhook permite que Telegram notifique automáticamente al bot sobre nuevos mensajes o comandos. Además, la ruta `/hook/osuc` permite recibir un `FormData` y hacer que el bot envíe un mensaje al canal especificado en `TELEGRAM_CHAT_ID`.
+### Archivos principales
+- `context.ts`: Define las variables de entorno disponibles para el bot.
+- `commands.ts`: Contiene los comandos del bot y el evento de mensaje para detectar el emoji de gambling.
+- También incluye la lógica para interactuar con SQLite y manejar los datos del bot.

@@ -3,6 +3,6 @@ import { Context } from "grammy";
 export type BotContext = Context & {
   env: {
     jwtSecret: string;
-    gambling: KVNamespace;
+    DB: D1Database;
   };
 };

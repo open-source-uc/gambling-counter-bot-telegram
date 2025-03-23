@@ -5,5 +5,11 @@
   "compatibility_date": "2025-01-31",
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "gambling",
+      "id": "b6810de7cbd84b46ab2c1fe69b797b88"
+    }
   ]
 }

@@ -18,6 +18,7 @@ telegramApp.use("*", async (c, next) => {
   bot.use((ctx, next) => {
     ctx.env = {
       jwtSecret: c.env.JWT_SECRET,
+      gambling: c.env.gambling,
     };
     return next();
   });

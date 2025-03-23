@@ -54,14 +54,72 @@ const reset = async (ctx: CommandContext<BotContext>, word: string) => {
 };
 
 commandComposer.command("ups", async (ctx) => {
-  if (!ctx.message) return;
-  const user_id = ctx.message.from?.id.toString();
 
-  if (!user_id) {
+  if (!ctx.message) return;
+  try {
+    const user_id = ctx.message.from?.id.toString();
+
+    if (!user_id) {
+      const msg = new MessageBuilder()
+        .add(`@${ctx.message.from.username}`)
+        .newLine(2)
+        .add(`Eres void*.`)
+        .build();
+
+      await ctx.api.sendMessage(ctx.message.chat.id, msg, {
+        message_thread_id: ctx.message.message_thread_id,
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      });
+      return;
+    }
+
+    const userData = await ctx.env.DB.prepare(
+      `SELECT user_id, last_gamble_date, gambling_count_today, win_count, total_count 
+     FROM gambling WHERE user_id = ?`
+    ).bind(user_id).first<{
+      user_id: string;
+      last_gamble_date: string;
+      gambling_count_today: number;
+      win_count: number;
+      total_count: number;
+    }>();
+
+    let gambling_count_today = 0;
+    let last_gamble_date = "Nunca has jugado";
+    let win_count = 0;
+    let total_count = 0;
+
+    if (userData) {
+      gambling_count_today = userData.gambling_count_today;
+      last_gamble_date = userData.last_gamble_date || "Nunca has jugado";
+      win_count = userData.win_count;
+      total_count = userData.total_count;
+    }
+
+    const now = Temporal.Now.zonedDateTimeISO("America/Santiago");
+    const currentDate = `${now.day.toString().padStart(2, '0')}-${now.month.toString().padStart(2, '0')}-${now.year}`;
+
+    if (last_gamble_date !== currentDate && last_gamble_date !== "Nunca has jugado") {
+      gambling_count_today = 0;
+    }
+
+    const winRate = total_count > 0 ? ((win_count / total_count) * 100).toFixed(2) : "0.00";
+
     const msg = new MessageBuilder()
       .add(`@${ctx.message.from.username}`)
       .newLine(2)
-      .add(`Eres void*.`)
+      .add(`📊 <b>Estadísticas de Tragamonedas</b>`)
+      .newLine(2)
+      .add(`Has jugado ${gambling_count_today === 1 ? `1 vez` : `${gambling_count_today} veces`} hoy.`)
+      .newLine(1)
+      .add(`Tu última jugada fue el: '${last_gamble_date}'.`)
+      .newLine(1)
+      .add(`Total de jugadas en tu vida: ${total_count}.`)
+      .newLine(1)
+      .add(`Victorias: ${win_count} (${winRate}%)`)
+      .newLine(2)
+      .add(`Hoy es: '${currentDate}'.`)
       .build();
 
     await ctx.api.sendMessage(ctx.message.chat.id, msg, {
@@ -69,62 +127,19 @@ commandComposer.command("ups", async (ctx) => {
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
     });
-    return;
+  } catch (error) {
+    const chatInfo = getTargetChatType(ctx.message);
+
+    const msg = new MessageBuilder()
+      .add(`Hubo un error al procesar tu solicitud. ${error}`)
+      .build();
+
+    await ctx.api.sendMessage(chatInfo.chatId, msg, {
+      message_thread_id: chatInfo.topicId,
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+    });
   }
-
-  const userData = await ctx.env.DB.prepare(
-    `SELECT user_id, last_gamble_date, gambling_count_today, win_count, total_count 
-     FROM gambling WHERE user_id = ?`
-  ).bind(user_id).first<{
-    user_id: string;
-    last_gamble_date: string;
-    gambling_count_today: number;
-    win_count: number;
-    total_count: number;
-  }>();
-
-  let gambling_count_today = 0;
-  let last_gamble_date = "Nunca has jugado";
-  let win_count = 0;
-  let total_count = 0;
-
-  if (userData) {
-    gambling_count_today = userData.gambling_count_today;
-    last_gamble_date = userData.last_gamble_date || "Nunca has jugado";
-    win_count = userData.win_count;
-    total_count = userData.total_count;
-  }
-
-  const now = Temporal.Now.zonedDateTimeISO("America/Santiago");
-  const currentDate = `${now.day.toString().padStart(2, '0')}-${now.month.toString().padStart(2, '0')}-${now.year}`;
-
-  if (last_gamble_date !== currentDate && last_gamble_date !== "Nunca has jugado") {
-    gambling_count_today = 0;
-  }
-
-  const winRate = total_count > 0 ? ((win_count / total_count) * 100).toFixed(2) : "0.00";
-
-  const msg = new MessageBuilder()
-    .add(`@${ctx.message.from.username}`)
-    .newLine(2)
-    .add(`📊 <b>Estadísticas de Tragamonedas</b>`)
-    .newLine(2)
-    .add(`Has jugado ${gambling_count_today === 1 ? `1 vez` : `${gambling_count_today} veces`} hoy.`)
-    .newLine(1)
-    .add(`Tu última jugada fue el: '${last_gamble_date}'.`)
-    .newLine(1)
-    .add(`Total de jugadas en tu vida: ${total_count}.`)
-    .newLine(1)
-    .add(`Victorias: ${win_count} (${winRate}%)`)
-    .newLine(2)
-    .add(`Hoy es: '${currentDate}'.`)
-    .build();
-
-  await ctx.api.sendMessage(ctx.message.chat.id, msg, {
-    message_thread_id: ctx.message.message_thread_id,
-    parse_mode: "HTML",
-    link_preview_options: { is_disabled: true },
-  });
 });
 
 commandComposer.command("status", async (ctx) => {
@@ -148,68 +163,83 @@ commandComposer.command("status", async (ctx) => {
 
 commandComposer.command("lore", async (ctx) => {
   if (!ctx.message) return;
+  const chatInfo = getTargetChatType(ctx.message);
 
-  const topPlayers = await ctx.env.DB.prepare(
-    `SELECT user_id, nickname, win_count, total_count 
+  try {
+    const topPlayers = await ctx.env.DB.prepare(
+      `SELECT user_id, nickname, win_count, total_count 
      FROM gambling 
      ORDER BY win_count DESC 
      LIMIT 3`
-  ).all<{
-    user_id: number;
-    nickname: string;
-    win_count: number;
-    total_count: number;
-  }>();
+    ).all<{
+      user_id: number;
+      nickname: string;
+      win_count: number;
+      total_count: number;
+    }>();
 
-  const results = topPlayers.results;
+    const results = topPlayers.results;
 
-  if (!results || results.length === 0) {
-    const msg = new MessageBuilder()
-      .add(`<b>🎰 Ranking de Tragamonedas 🎰</b>`)
-      .newLine(2)
-      .add(`Todavía no hay jugadores registrados.`)
-      .build();
+    if (!results || results.length === 0) {
+      const msg = new MessageBuilder()
+        .add(`<b>🎰 Ranking de Tragamonedas 🎰</b>`)
+        .newLine(2)
+        .add(`Todavía no hay jugadores registrados.`)
+        .build();
+
+      await ctx.api.sendMessage(ctx.message.chat.id, msg, {
+        message_thread_id: ctx.message.message_thread_id,
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+      });
+      return;
+    }
+
+    const messageBuilder = new MessageBuilder()
+      .add(`<b>🏆 PODIO DE TRAGAMONEDAS 🏆</b>`)
+      .newLine(2);
+
+    for (let i = 0; i < results.length; i++) {
+      const player = results[i];
+      const winRate = player.total_count > 0 ? ((player.win_count / player.total_count) * 100).toFixed(2) : "0.00";
+      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
+
+      const displayName = player.nickname || `Usuario #${player.user_id}`;
+
+      messageBuilder
+        .add(`${medal} <b>${displayName}</b>`)
+        .newLine(1)
+        .add(`   • Victorias: ${player.win_count}`)
+        .newLine(1)
+        .add(`   • Total jugadas: ${player.total_count}`)
+        .newLine(1)
+        .add(`   • Tasa de victoria: ${winRate}%`)
+        .newLine(2);
+    }
+
+    messageBuilder
+      .add(`<i>Usa el comando /ups para ver tus estadísticas</i>`);
+
+    const msg = messageBuilder.build();
 
     await ctx.api.sendMessage(ctx.message.chat.id, msg, {
       message_thread_id: ctx.message.message_thread_id,
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
     });
-    return;
+  } catch (error) {
+    const chatInfo = getTargetChatType(ctx.message);
+
+    const msg = new MessageBuilder()
+      .add(`Hubo un error al procesar tu solicitud. ${error}`)
+      .build();
+
+    await ctx.api.sendMessage(chatInfo.chatId, msg, {
+      message_thread_id: chatInfo.topicId,
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+    });
   }
-
-  const messageBuilder = new MessageBuilder()
-    .add(`<b>🏆 PODIO DE TRAGAMONEDAS 🏆</b>`)
-    .newLine(2);
-
-  for (let i = 0; i < results.length; i++) {
-    const player = results[i];
-    const winRate = player.total_count > 0 ? ((player.win_count / player.total_count) * 100).toFixed(2) : "0.00";
-    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
-
-    const displayName = player.nickname || `Usuario #${player.user_id}`;
-
-    messageBuilder
-      .add(`${medal} <b>${displayName}</b>`)
-      .newLine(1)
-      .add(`   • Victorias: ${player.win_count}`)
-      .newLine(1)
-      .add(`   • Total jugadas: ${player.total_count}`)
-      .newLine(1)
-      .add(`   • Tasa de victoria: ${winRate}%`)
-      .newLine(2);
-  }
-
-  messageBuilder
-    .add(`<i>Usa el comando /ups para ver tus estadísticas</i>`);
-
-  const msg = messageBuilder.build();
-
-  await ctx.api.sendMessage(ctx.message.chat.id, msg, {
-    message_thread_id: ctx.message.message_thread_id,
-    parse_mode: "HTML",
-    link_preview_options: { is_disabled: true },
-  });
 });
 
 commandComposer.on("message", async (ctx) => {
@@ -217,6 +247,8 @@ commandComposer.on("message", async (ctx) => {
   const chatInfo = getTargetChatType(ctx.message);
 
   try {
+    // Comandos de texto personalizados
+
     // Verificar si el mensaje es un emoji de tragamonedas
     if (ctx.message.dice?.emoji !== "🎰") return;
 
@@ -350,8 +382,6 @@ commandComposer.on("message", async (ctx) => {
       });
     }
   } catch (error) {
-    console.error("Error en el manejador de mensajes:", error);
-
     const msg = new MessageBuilder()
       .add(`Hubo un error al procesar tu solicitud. ${error}`)
       .build();
